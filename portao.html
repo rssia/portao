@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Portão">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Portão</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --border: #222222;
+      --green: #00ff88;
+      --red: #ff3355;
+      --yellow: #ffcc00;
+      --text: #f0f0f0;
+      --muted: #555555;
+      --radius: 16px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      letter-spacing: 4px;
+      color: var(--text);
+    }
+
+    .network-badge {
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s;
+    }
+
+    .network-badge.wifi { border-color: var(--green); color: var(--green); }
+    .network-badge.cloud { border-color: var(--yellow); color: var(--yellow); }
+
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.5s;
+    }
+
+    .status-card.aberto { border-color: var(--red); }
+    .status-card.fechado { border-color: var(--green); }
+
+    .status-card::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      opacity: 0.07;
+      transition: background 0.5s;
+      pointer-events: none;
+    }
+
+    .status-card.aberto::before { background: var(--red); }
+    .status-card.fechado::before { background: var(--green); }
+
+    .gate-icon {
+      width: 80px;
+      height: 80px;
+    }
+
+    .gate-icon svg {
+      width: 100%;
+      height: 100%;
+      transition: all 0.5s;
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { filter: drop-shadow(0 0 0px rgba(255,51,85,0)); }
+      50% { filter: drop-shadow(0 0 12px rgba(255,51,85,0.8)); }
+    }
+
+    .gate-icon.aberto svg { animation: pulse-red 2s infinite; }
+
+    .status-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 52px;
+      letter-spacing: 6px;
+      transition: color 0.5s;
+    }
+
+    .status-card.aberto .status-label { color: var(--red); }
+    .status-card.fechado .status-label { color: var(--green); }
+
+    .status-time {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+    }
+
+    .relay-btn {
+      width: 100%;
+      padding: 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .relay-btn:active {
+      transform: scale(0.97);
+      background: #1a1a1a;
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
+    .relay-btn .icon { font-size: 20px; }
+
+    .info-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .info-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .info-box .label {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+    }
+
+    .info-box .value {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 10px 20px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 100;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.ok { border-color: var(--green); color: var(--green); }
+    .toast.err { border-color: var(--red); color: var(--red); }
+
+    .conn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      display: inline-block;
+      margin-right: 6px;
+      transition: background 0.3s;
+    }
+    .conn-dot.online { background: var(--green); }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .conn-dot.connecting { animation: blink 1s infinite; background: var(--yellow); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="title">PORTÃO</div>
+    <div class="network-badge" id="networkBadge">--</div>
+  </div>
+
+  <div class="status-card" id="statusCard">
+    <div class="gate-icon" id="gateIcon">
+      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" id="gateSvg">
+        <rect x="8" y="10" width="28" height="60" rx="3" stroke="#555" stroke-width="3" fill="none"/>
+        <rect x="44" y="10" width="28" height="60" rx="3" stroke="#555" stroke-width="3" fill="none"/>
+        <line x1="8" y1="25" x2="36" y2="25" stroke="#555" stroke-width="2"/>
+        <line x1="8" y1="40" x2="36" y2="40" stroke="#555" stroke-width="2"/>
+        <line x1="8" y1="55" x2="36" y2="55" stroke="#555" stroke-width="2"/>
+        <line x1="44" y1="25" x2="72" y2="25" stroke="#555" stroke-width="2"/>
+        <line x1="44" y1="40" x2="72" y2="40" stroke="#555" stroke-width="2"/>
+        <line x1="44" y1="55" x2="72" y2="55" stroke="#555" stroke-width="2"/>
+        <circle cx="37" cy="40" r="3" fill="#555"/>
+        <circle cx="43" cy="40" r="3" fill="#555"/>
+      </svg>
+    </div>
+    <div class="status-label" id="statusLabel">...</div>
+    <div class="status-time">
+      <span class="conn-dot connecting" id="connDot"></span>
+      <span id="connText">A ligar...</span>
+    </div>
+  </div>
+
+  <button class="relay-btn" id="relayBtn" onclick="acionarRele()">
+    <span class="icon">⚡</span>
+    ACIONAR RELÉ
+  </button>
+
+  <div class="info-row">
+    <div class="info-box">
+      <div class="label">Rede</div>
+      <div class="value" id="infoRede">--</div>
+    </div>
+    <div class="info-box">
+      <div class="label">Última mudança</div>
+      <div class="value" id="infoTimestamp">--</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const FIREBASE_URL = "https://portao-18d32-default-rtdb.europe-west1.firebasedatabase.app/estado.json";
+  const SHELLY_IP    = "192.168.1.112";
+  const SHELLY_ID    = "7c2c676e6088";
+  const SHELLY_TOKEN = "M2U1YWYydWlk6B636D0AA5DA16B4284DDD1E60A8225888EFFBA88C4A01F76DBC653D52F1F0CED61348694424AA4C";
+  const SHELLY_CLOUD = "https://shelly-241eu.shelly.cloud";
+
+  let modoRede = "cloud";
+
+  async function detectarRede() {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 1500);
+      await fetch(`http://${SHELLY_IP}/shelly`, { signal: ctrl.signal, mode: 'no-cors' });
+      clearTimeout(timer);
+      modoRede = "wifi";
+    } catch {
+      modoRede = "cloud";
+    }
+    atualizarBadgeRede();
+  }
+
+  function atualizarBadgeRede() {
+    const badge = document.getElementById('networkBadge');
+    const info = document.getElementById('infoRede');
+    if (modoRede === "wifi") {
+      badge.textContent = "WiFi";
+      badge.className = "network-badge wifi";
+      info.textContent = "IP Local";
+    } else {
+      badge.textContent = "4G / Cloud";
+      badge.className = "network-badge cloud";
+      info.textContent = "Shelly Cloud";
+    }
+  }
+
+  function atualizarUI(estado, timestamp) {
+    const card = document.getElementById('statusCard');
+    const label = document.getElementById('statusLabel');
+    const icon = document.getElementById('gateIcon');
+    const connDot = document.getElementById('connDot');
+    const connText = document.getElementById('connText');
+    const infoTs = document.getElementById('infoTimestamp');
+    const svgEls = document.querySelectorAll('#gateSvg rect, #gateSvg line, #gateSvg circle');
+
+    connDot.className = "conn-dot online";
+    connText.textContent = "Firebase ligado";
+
+    // Estados válidos
+    const estadoValido = (estado === "aberto" || estado === "fechado");
+
+    if (estadoValido) {
+      card.className = "status-card " + estado;
+      icon.className = "gate-icon " + estado;
+      label.textContent = estado.toUpperCase();
+      const cor = estado === "aberto" ? "#ff3355" : "#00ff88";
+      svgEls.forEach(el => {
+        if (el.tagName === 'circle') el.setAttribute('fill', cor);
+        else el.setAttribute('stroke', cor);
+      });
+    } else {
+      // Estado desconhecido (ex: "teste_arranque")
+      card.className = "status-card";
+      icon.className = "gate-icon";
+      label.textContent = "?";
+      label.style.color = "#555";
+      connText.textContent = "A aguardar estado real...";
+      svgEls.forEach(el => {
+        if (el.tagName === 'circle') el.setAttribute('fill', '#555');
+        else el.setAttribute('stroke', '#555');
+      });
+    }
+
+    if (timestamp) {
+      const d = new Date(timestamp);
+      infoTs.textContent = d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+  }
+
+  async function buscarEstado() {
+    try {
+      const res = await fetch(FIREBASE_URL + "?t=" + Date.now());
+      const data = await res.json();
+      if (data && data.estado) {
+        atualizarUI(data.estado, data.timestamp);
+      }
+    } catch(e) {
+      document.getElementById('connDot').className = "conn-dot connecting";
+      document.getElementById('connText').textContent = "A reconectar...";
+    }
+  }
+
+  async function acionarRele() {
+    const btn = document.getElementById('relayBtn');
+    btn.disabled = true;
+    mostrarToast("A acionar...", "");
+
+    let ok = false;
+
+    if (modoRede === "wifi") {
+      try { await acionarLocal(); ok = true; } catch {}
+    }
+
+    if (!ok) {
+      try { await acionarCloud(); ok = true; } catch {}
+    }
+
+    if (!ok && modoRede === "wifi") {
+      try { await acionarCloud(); ok = true; } catch {}
+    }
+
+    if (ok) {
+      mostrarToast("✓ Relé acionado!", "ok");
+    } else {
+      mostrarToast("✗ Erro ao acionar", "err");
+    }
+
+    setTimeout(() => btn.disabled = false, 2000);
+  }
+
+  async function acionarLocal() {
+    await fetch(`http://${SHELLY_IP}/rpc/Switch.Toggle?id=0`, { mode: 'no-cors' });
+  }
+
+  async function acionarCloud() {
+    const res = await fetch(`${SHELLY_CLOUD}/device/relay/control`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `id=${SHELLY_ID}&auth_key=${SHELLY_TOKEN}&turn=toggle&channel=0`
+    });
+    if (!res.ok) throw new Error("Cloud error");
+  }
+
+  function mostrarToast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = "toast show " + tipo;
+    setTimeout(() => { t.className = "toast"; }, 3000);
+  }
+
+  // Init
+  detectarRede();
+  buscarEstado();
+  setInterval(buscarEstado, 3000);
+  setInterval(detectarRede, 30000);
+</script>
+</body>
+</html>
